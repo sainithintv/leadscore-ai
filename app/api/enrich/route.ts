@@ -13,14 +13,14 @@ export async function POST(req: NextRequest) {
   const results = await Promise.all(
     (profiles as Record<string, string>[]).map(async (profile) => {
       try {
-        const url = new URL('https://api.lusha.com/person');
+        const url = new URL('https://api.lusha.com/v2/person');
         url.searchParams.set('firstName', profile.firstName || '');
         url.searchParams.set('lastName', profile.lastName || '');
         url.searchParams.set('company', profile.company || '');
         if (profile.linkedinUrl) url.searchParams.set('linkedinUrl', profile.linkedinUrl);
 
         const res = await fetch(url.toString(), {
-          headers: { 'api_key': lushaApiKey },
+          headers: { 'api_key': `Bearer ${lushaApiKey}` },
         });
 
         if (!res.ok) {
