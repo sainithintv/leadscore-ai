@@ -28,9 +28,19 @@ For each profile, return a score 0-100 and a tier:
 
 Also provide 1-2 sentence reasoning.`;
 
-  const profilesText = (profiles as Record<string, string>[]).map((p, i) =>
-    `[${i}] ${p.firstName} ${p.lastName} | ${p.title} @ ${p.company} | ${p.industry} | ${p.location}`
-  ).join('\n');
+  // Skip internal/UI-only fields and empty values — send everything else to the AI
+  const SKIP_FIELDS = new Set(['id', 'enrichmentStatus', 'score', 'tier', 'reasoning', 'email', 'phone']);
+  const profilesText = (profiles as Record<string, string>[]).map((p, i) => {
+    const name = p.fullName || `${p.firstName || ''} ${p.lastName || ''}`.trim() || `Profile ${i}`;
+    const fields = Object.entries(p)
+      .filter(([k, v]) => !SKIP_FIELDS.has(k) && v && String(v).trim() && !['firstName','lastName','fullName','id'].includes(k))
+      .map(([k, v]) => {
+        const label = k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+        const val = String(v).slice(0, 300); // truncate long fields
+        return `${label}: ${val}`;
+      });
+    return `[${i}] ${name}\n  ${fields.join('\n  ')}`;
+  }).join('\n\n');
 
   try {
     let content = '';

@@ -6,10 +6,20 @@ export interface Profile {
   linkedinUrl: string;
   firstName: string;
   lastName: string;
+  fullName: string;
   title: string;
   company: string;
-  location: string;
+  companyId: string;
+  companyLocation: string;
+  companyDescription: string;
+  companySize: string;
+  companyWebsite: string;
   industry: string;
+  location: string;
+  summary: string;
+  isPremium: string;
+  openProfile: string;
+  type: string;
 }
 
 export interface ScoredProfile extends Profile {

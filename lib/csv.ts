@@ -13,16 +13,30 @@ export function parseCSV(file: File): Promise<Record<string, string>[]> {
 }
 
 export function normalizeProfile(row: Record<string, string>, index: number): Profile {
-  return {
-    id: `profile-${index}`,
-    linkedinUrl: row['LinkedIn URL'] || row['linkedin_url'] || row['Profile URL'] || row['url'] || '',
-    firstName: row['First Name'] || row['first_name'] || row['firstName'] || '',
-    lastName: row['Last Name'] || row['last_name'] || row['lastName'] || '',
-    title: row['Job Title'] || row['title'] || row['Position'] || row['Headline'] || '',
-    company: row['Company'] || row['company'] || row['Current Company'] || '',
-    location: row['Location'] || row['location'] || '',
-    industry: row['Industry'] || row['industry'] || '',
+  // Extract known display fields with fallbacks for common column name variations
+  const base: Profile = {
+    id: row['id'] || `profile-${index}`,
+    linkedinUrl: row['linkedinUrlProfile'] || row['LinkedIn URL'] || row['linkedin_url'] || row['url'] || '',
+    firstName: row['firstName'] || row['First Name'] || row['first_name'] || '',
+    lastName: row['lastName'] || row['Last Name'] || row['last_name'] || '',
+    fullName: row['fullName'] || row['Full Name'] || '',
+    title: row['title'] || row['Job Title'] || row['Position'] || row['Headline'] || '',
+    company: row['company'] || row['Company'] || row['Current Company'] || '',
+    companyId: row['companyId'] || '',
+    companyLocation: row['companyLocation'] || '',
+    companyDescription: row['companyDescription'] || '',
+    companySize: row['companySize'] || '',
+    companyWebsite: row['companyWebsite'] || '',
+    industry: row['industry'] || row['Industry'] || '',
+    location: row['location'] || row['Location'] || '',
+    summary: row['summary'] || row['Summary'] || '',
+    isPremium: row['isPremium'] || '',
+    openProfile: row['openProfile'] || '',
+    type: row['type'] || '',
   };
+
+  // Also carry through ALL other columns from the CSV so scoring AI sees everything
+  return { ...row, ...base };
 }
 
 export function exportToCSV(data: Record<string, unknown>[], filename: string) {
