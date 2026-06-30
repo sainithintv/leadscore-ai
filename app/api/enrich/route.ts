@@ -24,7 +24,9 @@ export async function POST(req: NextRequest) {
         });
 
         if (!res.ok) {
-          return { id: profile.id, email: null, phone: null, status: 'failed' };
+          const errText = await res.text().catch(() => '');
+          console.error(`Lusha error for ${profile.firstName} ${profile.lastName}: ${res.status} ${errText}`);
+          return { id: profile.id, email: null, phone: null, status: 'failed', lushaError: `${res.status}: ${errText.slice(0, 200)}` };
         }
 
         const data = await res.json() as {
