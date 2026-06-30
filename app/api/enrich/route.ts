@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         if (profile.linkedinUrl) url.searchParams.set('linkedinUrl', profile.linkedinUrl);
 
         const res = await fetch(url.toString(), {
-          headers: { 'api_key': `Bearer ${lushaApiKey}` },
+          headers: { 'api_key': lushaApiKey },
         });
 
         if (!res.ok) {
