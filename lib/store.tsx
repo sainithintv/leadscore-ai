@@ -52,7 +52,7 @@ type Action =
   | { type: 'LOAD'; payload: AppState };
 
 const defaultState: AppState = {
-  apiKeys: { openai: '', mistral: '', lusha: '', aiModel: 'mistral' },
+  apiKeys: { openai: '', mistral: '', lusha: '', aiModel: 'openai' },
   persona: { name: '', description: '', targetTitles: '', targetIndustries: '', minSeniority: 'mid' },
   profiles: [],
   scoredProfiles: [],

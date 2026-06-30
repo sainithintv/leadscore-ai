@@ -4,8 +4,8 @@ import OpenAI from 'openai';
 export async function POST(req: NextRequest) {
   const { profiles, persona, apiKey: clientApiKey, model } = await req.json();
 
-  // Default model is mistral; prefer server-side env vars, fall back to client-provided key
-  const resolvedModel = model || 'mistral';
+  // Default model is openai; prefer server-side env vars
+  const resolvedModel = model || 'openai';
   const apiKey = resolvedModel === 'mistral'
     ? (process.env.MISTRAL_API_KEY || clientApiKey)
     : (process.env.OPENAI_API_KEY || clientApiKey);
