@@ -3,48 +3,71 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   const { profiles, lushaApiKey: clientKey } = await req.json();
 
-  // Prefer server-side env var, fall back to client-provided key
   const lushaApiKey = process.env.LUSHA_API_KEY || clientKey;
 
   if (!lushaApiKey) {
-    return NextResponse.json({ error: 'No Lusha API key provided. Add one in Setup or set LUSHA_API_KEY env var.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'No Lusha API key provided. Set LUSHA_API_KEY in Vercel environment variables.' },
+      { status: 400 }
+    );
   }
 
-  const results = await Promise.all(
-    (profiles as Record<string, string>[]).map(async (profile) => {
-      try {
-        const url = new URL('https://api.lusha.com/v2/person');
-        url.searchParams.set('firstName', profile.firstName || '');
-        url.searchParams.set('lastName', profile.lastName || '');
-        url.searchParams.set('company', profile.company || '');
-        if (profile.linkedinUrl) url.searchParams.set('linkedinUrl', profile.linkedinUrl);
+  // V3 API: batch up to 100 contacts per request
+  const contacts = (profiles as Record<string, string>[]).map((p) => ({
+    clientReferenceId: p.id,
+    firstName: p.firstName || '',
+    lastName: p.lastName || '',
+    companyName: p.company || '',
+    ...(p.linkedinUrl ? { linkedinUrl: p.linkedinUrl } : {}),
+  }));
 
-        const res = await fetch(url.toString(), {
-          headers: { 'api_key': lushaApiKey },
-        });
+  try {
+    const res = await fetch('https://api.lusha.com/v3/contacts/search-and-enrich', {
+      method: 'POST',
+      headers: {
+        'api_key': lushaApiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contacts,
+        reveal: ['emails', 'phones'],
+      }),
+    });
 
-        if (!res.ok) {
-          const errText = await res.text().catch(() => '');
-          console.error(`Lusha error for ${profile.firstName} ${profile.lastName}: ${res.status} ${errText}`);
-          return { id: profile.id, email: null, phone: null, status: 'failed', lushaError: `${res.status}: ${errText.slice(0, 200)}` };
-        }
+    const text = await res.text();
 
-        const data = await res.json() as {
-          emailAddresses?: { email: string }[];
-          email?: string;
-          phoneNumbers?: { phoneNumber: string }[];
-          phone?: string;
-        };
+    if (!res.ok) {
+      console.error(`Lusha v3 error: ${res.status} ${text}`);
+      // Return failed for all profiles rather than crashing
+      return NextResponse.json({
+        results: profiles.map((p: Record<string, string>) => ({
+          id: p.id,
+          email: null,
+          phone: null,
+          status: 'failed',
+        })),
+      });
+    }
 
-        const email = data?.emailAddresses?.[0]?.email || data?.email || null;
-        const phone = data?.phoneNumbers?.[0]?.phoneNumber || data?.phone || null;
+    const data = JSON.parse(text) as {
+      results: {
+        clientReferenceId?: string;
+        emails?: { email: string }[];
+        phones?: { number: string }[];
+        error?: { code: string; message: string };
+      }[];
+    };
 
-        return { id: profile.id, email, phone, status: 'success' };
-      } catch {
-        return { id: profile.id, email: null, phone: null, status: 'failed' };
-      }
-    })
-  );
+    const results = data.results.map((r) => ({
+      id: r.clientReferenceId,
+      email: r.emails?.[0]?.email || null,
+      phone: r.phones?.[0]?.number || null,
+      status: r.error ? 'failed' : r.emails?.length || r.phones?.length ? 'success' : 'failed',
+    }));
 
-  return NextResponse.json({ results });
+    return NextResponse.json({ results });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
