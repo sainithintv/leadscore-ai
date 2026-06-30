@@ -6,7 +6,7 @@ import { Upload, Settings, BarChart3, Zap, Sparkles } from 'lucide-react';
 
 const steps = [
   { href: '/', label: 'Upload CSV', icon: Upload, step: 1 },
-  { href: '/setup', label: 'Persona & Keys', icon: Settings, step: 2 },
+  { href: '/setup', label: 'Set Persona', icon: Settings, step: 2 },
   { href: '/results', label: 'Score Profiles', icon: BarChart3, step: 3 },
   { href: '/enrichment', label: 'Enrich Contacts', icon: Zap, step: 4 },
 ];
