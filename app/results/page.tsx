@@ -15,6 +15,7 @@ export default function ResultsPage() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<FilterTier>('all');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const profiles = state.profiles;
   const scored = state.scoredProfiles;
@@ -239,8 +240,24 @@ export default function ResultsPage() {
                     <td className="px-4 py-3 text-white/50">{p.location || '—'}</td>
                     <td className="px-4 py-3 w-32"><ScoreBar score={p.score} /></td>
                     <td className="px-4 py-3"><Badge tier={p.tier} /></td>
-                    <td className="px-4 py-3 text-white/40 text-xs max-w-[200px]">
-                      <span title={p.reasoning} className="line-clamp-2 cursor-help">{p.reasoning}</span>
+                    <td className="px-4 py-3 text-white/40 text-xs max-w-[240px]">
+                      <span
+                        onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                        className={cn(
+                          'cursor-pointer hover:text-white/70 transition-colors',
+                          expandedId === p.id ? 'whitespace-normal' : 'line-clamp-2'
+                        )}
+                      >
+                        {p.reasoning}
+                      </span>
+                      {p.reasoning && p.reasoning.length > 80 && (
+                        <button
+                          onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                          className="block mt-0.5 text-violet-400/60 hover:text-violet-400 text-[10px] font-medium"
+                        >
+                          {expandedId === p.id ? 'Show less' : 'Read more'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
